@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Interfaces\CategoryServiceInterface;
 use App\DTOs\CategoryDTO;
 use Illuminate\Http\Request;
-use App\Models\Category;
+use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
@@ -42,15 +42,20 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Category $category)
+    public function update(Request $request, string $id)
     {
+        Validator::validate(
+            ['id' => $id],
+            ['id' => 'required|uuid|exists:categories,id']
+        ); 
+
         $request->validate([
             'title' => 'required|string|max:255',
             'user_id' => 'required|exists:users,id'
         ]);
 
         $dto = CategoryDTO::fromRequest($request->all());
-        $this->categoryService->update($category->id, $dto);
+        $this->categoryService->update($id, $dto);
 
         return response()->json([
             'message' => 'Category updated successfully'
@@ -62,6 +67,11 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
+        Validator::validate(
+            ['id' => $id],
+            ['id' => 'required|uuid|exists:categories,id']
+        ); 
+        
         $this->categoryService->delete($id);
 
         return response()->json([

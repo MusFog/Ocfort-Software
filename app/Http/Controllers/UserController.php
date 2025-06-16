@@ -6,6 +6,7 @@ use App\Interfaces\UserServiceInterface;
 use App\DTOs\UserDTO;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -44,13 +45,18 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, string $id)
     {
+        Validator::validate(
+            ['id' => $id],
+            ['id' => 'required|uuid|exists:users,id']
+        ); 
+        
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        $this->userService->rename($user->id, $request->name);
+        $this->userService->rename($id, $request->name);
 
         return response()->json([
             'message' => 'User updated successfully'
@@ -60,9 +66,14 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(string $id)
     {
-        $this->userService->remove($user->id);
+        Validator::validate(
+            ['id' => $id],
+            ['id' => 'required|uuid|exists:users,id']
+        ); 
+
+        $this->userService->remove($id);
 
         return response()->json([
             'message' => 'User deleted successfully',
