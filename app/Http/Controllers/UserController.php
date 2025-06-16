@@ -2,22 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Interfaces\UserServiceInterface;
+use App\DTOs\UserDTO;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use App\Jobs\SendEmail;
+use App\Models\User;
 
 class UserController extends Controller
 {
+    public function __construct(
+        protected UserServiceInterface $userService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $users = User::all();
-
         return response()->json([
-            'data' => $users
+            'data' => $this->userService->list()
         ], 200);
     }
 
@@ -31,13 +33,8 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
         ]);
 
-        $user = User::create([
-            'id' => Str::uuid(),
-            'name' => $request->name,
-            'email' => $request->email
-        ]);
-
-        SendEmail::dispatch($user->id, now()->addMinutes(5));
+        $dto = UserDTO::fromRequest($request->all());
+        $this->userService->register($dto);
 
         return response()->json([
             'message' => 'User created successfully',
@@ -53,12 +50,10 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        $user->update([
-            'name' => $request->name,
-        ]);
+        $this->userService->rename($user->id, $request->name);
 
         return response()->json([
-            'message' => 'User updated successfully',
+            'message' => 'User updated successfully'
         ], 200);
     }
 
@@ -67,8 +62,7 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        $user->categories()->detach();
-        $user->delete();
+        $this->userService->remove($user->id);
 
         return response()->json([
             'message' => 'User deleted successfully',

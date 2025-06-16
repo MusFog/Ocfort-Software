@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\CategoryServiceInterface;
+use App\DTOs\CategoryDTO;
 use Illuminate\Http\Request;
 use App\Models\Category;
-use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
+    public function __construct(
+        protected CategoryServiceInterface $categoryService
+    ) {}
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $categories = Category::all();
-
         return response()->json([
-            'data' => $categories
+            'data' => $this->categoryService->list()
         ], 200);
     }
 
@@ -27,20 +29,13 @@ class CategoryController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'user_id' => 'nullable|exists:users,id'
         ]);
 
-        $category = Category::create([
-            'id' => Str::uuid(),
-            'title' => $request->title
-        ]);
-
-        if ($request->user_id) {
-            $category->users()->attach($request->user_id);
-        }
+        $dto = CategoryDTO::fromRequest($request->all());
+        $this->categoryService->create($dto);
 
         return response()->json([
-            'message' => 'Category created successfully',
+            'message' => 'Category created successfully'
         ], 201);
     }
 
@@ -54,35 +49,23 @@ class CategoryController extends Controller
             'user_id' => 'required|exists:users,id'
         ]);
 
-        $category->update([
-            'title' => $request->title
-        ]);
+        $dto = CategoryDTO::fromRequest($request->all());
+        $this->categoryService->update($category->id, $dto);
 
-        $pivotExists = $category->users()
-            ->whereKey($request->user_id)
-            ->exists();
-
-        if (!$pivotExists) {
-            $category->users()->sync($request->user_id);
-        } else {
-            $category->users()->detach($request->user_id);
-        }
-    
         return response()->json([
-            'message' => 'Category updated successfully',
+            'message' => 'Category updated successfully'
         ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Category $category)
+    public function destroy(string $id)
     {
-        $category->users()->detach();
-        $category->delete();
+        $this->categoryService->delete($id);
 
         return response()->json([
-            'message' => 'Category deleted successfully',
+            'message' => 'Category deleted successfully'
         ], 200);
     }
 }
