@@ -26,33 +26,15 @@ class CategoryRepository implements CategoryRepositoryInterface
         }
     }
 
-    public function update(string $id, string $title): void
+    public function update(string $id, string $title, ?string $userId = null): void
     {
         $category = Category::find($id);
 
         $category->update(['title' => $title]);
-    }
 
-    public function userExists(string $catId, string $userId): bool
-    {
-        return Category::find($catId)
-            ->users()
-            ->whereKey($userId)
-            ->exists();
-    }
-
-    public function attachUser(string $catId, string $userId): void
-    {
-        Category::find($catId)
-            ->users()
-            ->attach($userId);
-    }
-
-    public function detachUser(string $catId, string $userId): void
-    {
-        Category::find($catId)
-            ->users()
-            ->detach($userId);
+        if ($userId) {
+            $category->users()->toggle([$userId]);
+        }
     }
 
     public function delete(string $id): void

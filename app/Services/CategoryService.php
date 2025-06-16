@@ -30,13 +30,7 @@ class CategoryService implements CategoryServiceInterface
 
     public function update(string $id, CategoryDTO $data): void
     {
-        if ($data->userId !== null) {
-            $this->categoryRepository->userExists($id, $data->userId)
-                ? $this->categoryRepository->detachUser($id, $data->userId)
-                : $this->categoryRepository->attachUser($id, $data->userId);
-        }
-        
-        $this->categoryRepository->update($id, $data->title);
+        $this->categoryRepository->update($id, $data->title, $data->userId);
     }
 
     public function delete(string $id): void
