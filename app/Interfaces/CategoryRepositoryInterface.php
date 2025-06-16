@@ -9,7 +9,9 @@ interface CategoryRepositoryInterface
 {
     public function getAll(): Collection;
     public function create(CategoryDTO $attrs): void;
-    public function update(string $id, string $title, ?string $userId = null): void;
-    public function toggleUser(string $id, string $userId): void;
+    public function update(string $id, string $title): void;
+    public function userExists(string $catId, string $userId): bool;
+    public function attachUser(string $catId, string $userId): void;
+    public function detachUser(string $catId, string $userId): void;
     public function delete(string $id): void;
 }
