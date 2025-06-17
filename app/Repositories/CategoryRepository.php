@@ -33,7 +33,7 @@ class CategoryRepository implements CategoryRepositoryInterface
         $category->update(['title' => $title]);
 
         if ($userId) {
-            $category->users()->toggle([$userId]);
+            $category->users()->sync($userId);
         }
     }
 
