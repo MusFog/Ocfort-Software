@@ -14,6 +14,10 @@
         {{ errorMessage }}
         <button @click="errorMessage = ''">×</button>
       </div>
+      <div v-if="successMessage" class="error-message" style="background-color:#f0fff4;color:#276749;border:1px solid #68d391;">
+        {{ successMessage }}
+        <button @click="successMessage = ''">×</button>
+      </div>
 
       <div class="forms-row">
         <section class="panel">
@@ -37,6 +41,14 @@
                 required 
                 :disabled="isLoading"
               />
+            </label>
+            <label>
+              Роль
+              <select v-model="userFormData.role" :disabled="isLoading" required>
+                <option value="0">Користувач</option>
+                <option value="1">Модератор</option>
+                <option value="2">Адмін</option>
+              </select>
             </label>
             <button type="submit" :disabled="isLoading">
               {{ userFormData.id ? 'Оновити' : 'Додати' }}
@@ -128,6 +140,28 @@
         </section>
       </div>
 
+      <div class="tables-row">
+        <section class="panel">
+          <h3>Топ користувачів (роль: USER)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Імʼя</th>
+                <th>Роль</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in topUserList" :key="user.id">
+                <td>{{ user.id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.role }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
       <div v-if="showDeleteConfirm" class="modal">
         <div class="modal-content">
           <h3>Підтвердження видалення</h3>
@@ -168,8 +202,10 @@ const apiClient = axios.create({
 
 const userList = ref([]);
 const categoryList = ref([]);
+const topUserList = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref('');
+const successMessage = ref('');
 const showDeleteConfirm = ref(false);
 const deleteType = ref('');
 const deleteId = ref(null);
@@ -177,7 +213,8 @@ const deleteId = ref(null);
 const userFormData = ref({
   id: null,
   name: '',
-  email: ''
+  email: '',
+  role: 'USER',
 });
 
 const categoryFormData = ref({
@@ -210,22 +247,33 @@ async function fetchCategoryList() {
   categoryList.value = response.data.data;
 }
 
+async function fetchTopUsers() {
+  const response = await handleApiRequest(() => apiClient.get('/users/top?limit=5'));
+  topUserList.value = response.data.data;
+}
+
 async function handleUserSubmit() {
   try {
+    let response;
     if (userFormData.value.id) {
-      await handleApiRequest(() => 
-        apiClient.put(`/users/${userFormData.value.id}`, userFormData.value)
+      response = await handleApiRequest(() => 
+        apiClient.put(`/users/${userFormData.value.id}`, {
+          id: userFormData.value.id,
+          name: userFormData.value.name,
+          email: userFormData.value.email,
+          role: userFormData.value.role,
+        })
       );
     } else {
-      const { name, email } = userFormData.value;
-      const response = await handleApiRequest(() => 
-        apiClient.post('/users', { name, email })
+      response = await handleApiRequest(() => 
+        apiClient.post('/users', {
+          name: userFormData.value.name,
+          email: userFormData.value.email,
+          role: userFormData.value.role,
+        })
       );
-      if (response.data.data) {
-        userList.value.push(response.data.data);
-      }
     }
-    
+    successMessage.value = response.data;
     resetUserForm();
     await fetchUserList();
   } catch (error) {
@@ -237,7 +285,8 @@ function resetUserForm() {
   userFormData.value = {
     id: null,
     name: '',
-    email: ''
+    email: '',
+    role: 'USER',
   };
 }
 
@@ -245,7 +294,8 @@ function handleUserEdit(user) {
   userFormData.value = {
     id: user.id,
     name: user.name,
-    email: user.email
+    email: user.email,
+    role: user.role || 'USER',
   };
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -258,14 +308,16 @@ function confirmDelete(type, id) {
 
 async function handleDelete() {
   try {
+    let response;
     if (deleteType.value === 'user') {
-      await handleApiRequest(() => apiClient.delete(`/users/${deleteId.value}`));
+      response = await handleApiRequest(() => apiClient.delete(`/users/${deleteId.value}`));
       userList.value = userList.value.filter(user => user.id !== deleteId.value);
       await fetchCategoryList();
     } else {
-      await handleApiRequest(() => apiClient.delete(`/categories/${deleteId.value}`));
+      response = await handleApiRequest(() => apiClient.delete(`/categories/${deleteId.value}`));
       categoryList.value = categoryList.value.filter(category => category.id !== deleteId.value);
     }
+    successMessage.value = response.data;
     showDeleteConfirm.value = false;
   } catch (error) {
   }
@@ -277,18 +329,17 @@ async function handleCategorySubmit() {
       title: categoryFormData.value.title,
       user_id: categoryFormData.value.userId
     };
-
+    let response;
     if (categoryFormData.value.id) {
-      await handleApiRequest(() => 
+      response = await handleApiRequest(() => 
         apiClient.put(`/categories/${categoryFormData.value.id}`, categoryData)
       );
     } else {
-      const response = await handleApiRequest(() => 
+      response = await handleApiRequest(() => 
         apiClient.post('/categories', categoryData)
       );
-      categoryList.value.push(response.data.data);
     }
-    
+    successMessage.value = response.data;
     resetCategoryForm();
     await fetchCategoryList();
   } catch (error) {
@@ -313,7 +364,7 @@ function handleCategoryEdit(category) {
 }
 
 onMounted(async () => {
-  await Promise.all([fetchUserList(), fetchCategoryList()]);
+  await Promise.all([fetchUserList(), fetchCategoryList(), fetchTopUsers()]);
 });
 </script>
 

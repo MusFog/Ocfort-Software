@@ -14,7 +14,7 @@ class CategoryDTO
     {
         return new self(
             title: $data['title'],
-            userId: $data['user_id'] ?? null
+            userId: $data['user_id']
         );
     }
 

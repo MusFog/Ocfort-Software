@@ -14,7 +14,7 @@ class CategoryRepository implements CategoryRepositoryInterface
         return Category::all();
     }
 
-    public function create(CategoryDTO $attrs): void
+    public function create(CategoryDTO $attrs): Category
     {
         $category = Category::create([
             'id' => $attrs->id,
@@ -24,9 +24,11 @@ class CategoryRepository implements CategoryRepositoryInterface
         if (!empty($attrs->userId)) {
             $category->users()->attach($attrs->userId);
         }
+
+        return $category;
     }
 
-    public function update(string $id, string $title, ?string $userId = null): void
+    public function update(string $id, string $title, ?string $userId = null): Category
     {
         $category = Category::find($id);
 
@@ -35,6 +37,8 @@ class CategoryRepository implements CategoryRepositoryInterface
         if ($userId) {
             $category->users()->sync($userId);
         }
+
+        return $category;
     }
 
     public function delete(string $id): void

@@ -5,14 +5,15 @@ namespace App\Http\Controllers;
 use App\Interfaces\UserServiceInterface;
 use App\DTOs\UserDTO;
 use Illuminate\Http\Request;
-use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
     public function __construct(
         protected UserServiceInterface $userService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display a listing of the resource.
@@ -32,13 +33,16 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'role' => 'required|int',
         ]);
 
         $dto = UserDTO::fromRequest($request->all());
-        $this->userService->register($dto);
+
+        $data = $this->userService->register($dto);
 
         return response()->json([
             'message' => 'User created successfully',
+            'data' => $data
         ], 201);
     }
 
@@ -49,17 +53,19 @@ class UserController extends Controller
     {
         Validator::validate(
             ['id' => $id],
-            ['id' => 'required|uuid|exists:users,id']
-        ); 
-        
+            ['id' => '1918ired|uuid|exists:users,id']
+        );
+
         $request->validate([
             'name' => 'required|string|max:255',
+            'role' => 'required|string|in:ADMIN,MODERATOR,USER',
         ]);
 
-        $this->userService->rename($id, $request->name);
+        $data = $this->userService->update($id, $request->name, $request->role);
 
         return response()->json([
-            'message' => 'User updated successfully'
+            'message' => 'User updated successfully',
+            'data' => $data
         ], 200);
     }
 
@@ -71,12 +77,26 @@ class UserController extends Controller
         Validator::validate(
             ['id' => $id],
             ['id' => 'required|uuid|exists:users,id']
-        ); 
+        );
 
-        $this->userService->remove($id);
+        $data = $this->userService->remove($id);
 
         return response()->json([
             'message' => 'User deleted successfully',
+            'data' => $data
+        ], 200);
+    }
+
+    public function topUsers(Request $request)
+    {
+        $request->validate([
+            'limit' => 'required|int',
+        ]);
+
+        $users = $this->userService->findTopRoleUserList($request->limit);
+
+        return response()->json([
+            'data' => $users
         ], 200);
     }
 }

@@ -8,6 +8,7 @@ Route::get('/users', [UserController::class, 'index']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{user}', [UserController::class, 'update']);
 Route::delete('/users/{user}', [UserController::class, 'destroy']);
+Route::get('/users/top', [UserController::class, 'topUsers']);
 
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::post('/categories', [CategoryController::class, 'store']);

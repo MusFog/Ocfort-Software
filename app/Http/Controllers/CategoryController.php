@@ -47,14 +47,14 @@ class CategoryController extends Controller
         Validator::validate(
             ['id' => $id],
             ['id' => 'required|uuid|exists:categories,id']
-        ); 
+        );
 
         $request->validate([
             'title' => 'required|string|max:255',
             'user_id' => 'required|exists:users,id'
         ]);
 
-        $dto = CategoryDTO::fromRequest($request->all());
+        $dto = CategoryDTO::withId($request->all());
         $this->categoryService->update($id, $dto);
 
         return response()->json([
@@ -70,8 +70,8 @@ class CategoryController extends Controller
         Validator::validate(
             ['id' => $id],
             ['id' => 'required|uuid|exists:categories,id']
-        ); 
-        
+        );
+
         $this->categoryService->delete($id);
 
         return response()->json([

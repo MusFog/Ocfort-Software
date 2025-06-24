@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name')->index();
             $table->string('email')->unique();
+            $table->unsignedTinyInteger('role')->default(0);
             $table->timestamps();
         });
     }
